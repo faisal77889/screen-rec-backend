@@ -13,12 +13,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json()); // to parse incoming JSON requests
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(cors({ origin: '*' }));
+app.use(express.json()); // To parse incoming JSON requests
+
+// Serve static files properly
 app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
 app.use("/uploads/thumbnails", express.static(path.join(__dirname, "uploads/thumbnails")));
+
+// Optional: general catch-all in case you want to access anything else in /uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 app.use("/",authRouter);
@@ -29,8 +32,8 @@ app.use("/",videoRouter);
 connectDB()
     .then(()=>{
         console.log("connected to the database cluster successfully");
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
+        app.listen(PORT,'0.0.0.0', () => {
+            console.log(`Server running on http://0.0.0.0:${PORT}`);
         });
     })
     .catch((err)=>{

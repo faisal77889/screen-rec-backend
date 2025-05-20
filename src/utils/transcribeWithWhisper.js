@@ -1,31 +1,32 @@
-const { exec } = require("child_process");
-const path = require("path");
 const fs = require("fs");
+const path = require("path");
+const axios = require("axios");
+const FormData = require("form-data");
+require("dotenv").config(); // Ensure your OPENAI_API_KEY is in .env
 
 async function transcribeWithWhisper(audioPath, outputDir) {
-    return new Promise((resolve, reject) => {
-        const outputPath = path.join(outputDir, path.basename(audioPath, path.extname(audioPath)));
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
 
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
+  const audioFile = fs.createReadStream(audioPath);
+  const form = new FormData();
+  form.append("file", audioFile);
+  form.append("model", "whisper-1");
+  form.append("response_format", "srt");
 
-        const cmd = `whisper "${audioPath}" --language en --output_format srt --output_dir "${outputDir}"`;
+  const response = await axios.post("https://api.openai.com/v1/audio/transcriptions", form, {
+    headers: {
+      ...form.getHeaders(),
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+  });
 
-        exec(cmd, (error, stdout, stderr) => {
-            if (error) {
-                console.error("Whisper error:", stderr || stdout);
-                return reject("Failed to transcribe audio");
-            }
+  const srtContent = response.data;
+  const outputFile = path.join(outputDir, `${path.basename(audioPath, path.extname(audioPath))}.srt`);
+  fs.writeFileSync(outputFile, srtContent, "utf-8");
 
-            const srtPath = `${outputPath}.srt`;
-            if (!fs.existsSync(srtPath)) {
-                return reject("SRT file not created");
-            }
-
-            resolve(srtPath);
-        });
-    });
+  return outputFile;
 }
 
 module.exports = { transcribeWithWhisper };

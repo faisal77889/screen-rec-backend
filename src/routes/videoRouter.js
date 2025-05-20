@@ -10,7 +10,7 @@ const { transcribeWithWhisper } = require("../utils/transcribeWithWhisper");
 const { burnSubtitlesIntoVideo } = require("../utils/burnSubtitles");
 // Inside your upload route, after extracting audio:
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://loom-backend-production.up.railway.app" || "http://localhost:5000";
 
 const videoRouter = express.Router();
 
